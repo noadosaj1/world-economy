@@ -111,7 +111,16 @@ export function CityBlocks({ data }: { data: WorldData }) {
       const wx = cellToWorld(plot.gridX, cellSize);
       const wz = cellToWorld(plot.gridZ, cellSize);
 
-      // Claimed land stays clear: its label and pad colour say who owns it.
+      // A plot with a business gets that business drawn on it, sized by its
+      // level, so progress is visible from the map. This is real persisted
+      // state, not scenery.
+      if (plot.business) {
+        addPlayerBuilding(bases, setbacks, roofs, plot, wx, wz, cellSize);
+        continue;
+      }
+
+      // Claimed but empty land stays clear: its label and pad colour say who
+      // owns it, and there is genuinely nothing built there yet.
       if (plot.ownerId) {
         if (style.trees) addTree(trunks, canopies, plot, wx, wz, cellSize, 0.3);
         continue;
@@ -183,6 +192,83 @@ export function CityBlocks({ data }: { data: WorldData }) {
       <InstancedTiles instances={canopies} roughness={0.85} castShadow />
     </group>
   );
+}
+
+/**
+ * Per-business look. A player can tell a farm from a foundry at a glance, and
+ * a level 5 anything towers over a level 1.
+ */
+type BusinessLook = {
+  walls: string;
+  roof: string;
+  floors: number;
+  footprint: number;
+  /** A silo, chimney or sign that marks the trade out. */
+  accent?: string;
+};
+
+const BUSINESS_LOOK: Record<string, BusinessLook> = {
+  farm:      { walls: "#f0e4c8", roof: "#b04a38", floors: 1, footprint: 0.5, accent: "#8d6a3f" },
+  mine:      { walls: "#8a8478", roof: "#4a463f", floors: 1, footprint: 0.58, accent: "#5d5850" },
+  mill:      { walls: "#eadfc4", roof: "#c08a3e", floors: 2, footprint: 0.62 },
+  foundry:   { walls: "#9aa0a8", roof: "#4b5158", floors: 2, footprint: 0.7,  accent: "#d4622a" },
+  store:     { walls: "#e8f0f6", roof: "#2f7fa8", floors: 1, footprint: 0.6,  accent: "#3aa0d0" },
+  warehouse: { walls: "#c9ccd2", roof: "#6a6f78", floors: 1, footprint: 0.78 },
+};
+
+const FALLBACK_LOOK: BusinessLook = {
+  walls: "#d8d8d8",
+  roof: "#5a5a5a",
+  floors: 1,
+  footprint: 0.6,
+};
+
+function addPlayerBuilding(
+  bases: TileInstance[],
+  setbacks: TileInstance[],
+  roofs: TileInstance[],
+  plot: WorldPlot,
+  wx: number,
+  wz: number,
+  cellSize: number,
+) {
+  const business = plot.business!;
+  const look = BUSINESS_LOOK[business.type] ?? FALLBACK_LOOK;
+
+  // Each level adds a floor, so upgrading is visible from across the map.
+  const floors = look.floors + (business.level - 1);
+  const height = floors * FLOOR_HEIGHT;
+  const width = cellSize * look.footprint;
+
+  bases.push({
+    position: [wx, 0.44 + height / 2, wz],
+    scale: [width, height, width],
+    color: look.walls,
+  });
+
+  roofs.push({
+    position: [wx, 0.44 + height + 0.8, wz],
+    scale: [width * 1.1, 1.6, width * 1.1],
+    color: look.roof,
+  });
+
+  // A silo, chimney or sign - whatever marks the trade out.
+  if (look.accent) {
+    setbacks.push({
+      position: [wx + width * 0.62, 0.44 + height * 0.7, wz - width * 0.42],
+      scale: [width * 0.24, height * 1.4, width * 0.24],
+      color: look.accent,
+    });
+  }
+
+  // Levels 4 and 5 gain an upper block, so the top of the range reads as big.
+  if (business.level >= 4) {
+    setbacks.push({
+      position: [wx, 0.44 + height + 2.4, wz],
+      scale: [width * 0.6, FLOOR_HEIGHT, width * 0.6],
+      color: shade(look.walls, -0.15),
+    });
+  }
 }
 
 /** Two boxes make a readable stylised tree from a map camera. */

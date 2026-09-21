@@ -78,3 +78,41 @@ describe('"use server" modules', () => {
     }
   });
 });
+
+/**
+ * Guards the server/client boundary.
+ *
+ * A Server Component may only pass a *reference* to a server action across to
+ * a Client Component. Wrapping one in an inline arrow makes it an ordinary
+ * function, which React cannot serialise, and the page throws at request time:
+ *
+ *   Functions cannot be passed directly to Client Components.
+ *
+ * Like the `"use server"` rule, this type-checks and builds cleanly and only
+ * fails when the page is actually rendered.
+ */
+describe("server actions passed to client components", () => {
+  const files = walk(SRC).filter((path) => path.endsWith(".tsx"));
+
+  it("finds the pages it is meant to be checking", () => {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  it("are passed by reference, never wrapped in an inline function", () => {
+    for (const path of files) {
+      const code = readFileSync(path, "utf8");
+      // Only applies to server components; a client component may define
+      // handlers inline freely.
+      if (code.split("\n")[0]?.trim() === '"use client";') continue;
+
+      const inline = [
+        ...code.matchAll(/\baction=\{\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g),
+      ];
+      expect(
+        inline.map((m) => m[0]),
+        `${path.replace(process.cwd(), ".")} passes an inline function as \`action\`, ` +
+          `which cannot cross the server/client boundary`,
+      ).toEqual([]);
+    }
+  });
+});

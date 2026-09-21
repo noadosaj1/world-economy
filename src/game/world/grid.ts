@@ -21,6 +21,8 @@ export type WorldPlot = {
   /** Public company identity of the owner, when there is one. */
   ownerLabel: string | null;
   isMine: boolean;
+  /** The business standing on this plot, if one has been built. */
+  business: { type: string; level: number } | null;
 };
 
 export type WorldData = {
@@ -58,9 +60,11 @@ export function buildWorldData(
     cellSize: number;
     myId: string | null;
     ownerLabels: Map<string, string>;
+    /** Businesses by plot id, so the map can draw what was actually built. */
+    businesses?: Map<string, { type: string; level: number }>;
   },
 ): WorldData {
-  const { gridMin, gridMax, cellSize, myId, ownerLabels } = options;
+  const { gridMin, gridMax, cellSize, myId, ownerLabels, businesses } = options;
 
   const worldPlots: WorldPlot[] = plots.map((plot) => ({
     id: plot.id,
@@ -73,6 +77,7 @@ export function buildWorldData(
     isPurchasable: plot.is_purchasable,
     ownerLabel: plot.owner_id ? (ownerLabels.get(plot.owner_id) ?? null) : null,
     isMine: Boolean(myId && plot.owner_id === myId),
+    business: businesses?.get(plot.id) ?? null,
   }));
 
   const occupied = new Set(worldPlots.map((p) => cellKey(p.gridX, p.gridZ)));

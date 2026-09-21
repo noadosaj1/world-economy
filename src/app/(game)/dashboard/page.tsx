@@ -9,19 +9,29 @@ import {
   Stat,
 } from "@/components/ui";
 import { CURRENCY, ZONES } from "@/config/economy";
-import { formatMoney, formatMoneyPrecise, toAmount } from "@/lib/economy/format";
+import { formatMoney, toAmount } from "@/lib/economy/format";
 import {
   getCurrentPlayer,
   getRecentTransactions,
 } from "@/services/player/state";
+import { getInventory, getMyBuildings, getResources } from "@/services/economy/read";
+import { ActionForm } from "@/components/ActionForm";
+import { collectAllAction } from "@/services/economy/actions";
 import type { LedgerType } from "@/types/db";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 const LEDGER_LABELS: Record<LedgerType, string> = {
   STARTING_BALANCE: "Starting balance",
-  LAND_PURCHASE: "Land purchase",
   ADMIN_GRANT: "Adjustment",
+  LAND_PURCHASE: "Bought land",
+  BUILDING_PURCHASE: "Built a business",
+  BUILDING_UPGRADE: "Upgraded a business",
+  WORKER_HIRE: "Hired a worker",
+  WORK_REWARD: "Worked a shift",
+  BUSINESS_REVENUE: "Business revenue",
+  RESOURCE_PURCHASE: "Bought goods",
+  RESOURCE_SALE: "Sold goods",
 };
 
 export default async function DashboardPage({
@@ -29,15 +39,26 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ welcome?: string }>;
 }) {
-  const [player, transactions, params] = await Promise.all([
-    getCurrentPlayer(),
-    getRecentTransactions(8),
-    searchParams,
-  ]);
+  const [player, transactions, params, buildings, inventory, resources] =
+    await Promise.all([
+      getCurrentPlayer(),
+      getRecentTransactions(8),
+      searchParams,
+      getMyBuildings(),
+      getInventory(),
+      getResources(),
+    ]);
 
   if (!player) redirect("/login");
   const { profile, company, plots, netWorth } = player;
   const landValue = plots.reduce((sum, p) => sum + toAmount(p.purchase_price), 0);
+
+  const prices = new Map(resources.map((r) => [r.key, r.price]));
+  const pendingTotal = buildings.reduce((sum, b) => sum + b.pending, 0);
+  const goodsValue = [...inventory.entries()].reduce(
+    (sum, [key, qty]) => sum + qty * (prices.get(key) ?? 0),
+    0,
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
@@ -76,19 +97,67 @@ export default async function DashboardPage({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Cash" value={formatMoney(profile.cash)} tone="money" sub="Spendable now" />
-        <Stat label="Net worth" value={formatMoney(netWorth)} sub="Cash + land" />
+        <Stat
+          label="Net worth"
+          value={formatMoney(netWorth)}
+          sub="Cash + land + buildings + goods"
+        />
         <Stat
           label="Land"
           value={`${plots.length} ${plots.length === 1 ? "plot" : "plots"}`}
           sub={formatMoney(landValue)}
         />
         <Stat
-          label="Share price"
-          value={company ? formatMoneyPrecise(company.stock_price) : "—"}
+          label="Businesses"
+          value={String(buildings.length)}
           tone="brand"
-          sub="Trading opens in a later phase"
+          sub={`${formatMoney(goodsValue)} of goods held`}
         />
       </div>
+
+      {buildings.length > 0 ? (
+        <Panel className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-sm font-bold tracking-wide text-slate-200 uppercase">
+              Production waiting
+            </h2>
+            <p className="tnum mt-1 text-sm text-slate-400">
+              {pendingTotal > 0
+                ? `${pendingTotal} units of goods ready across ${buildings.length} ${
+                    buildings.length === 1 ? "business" : "businesses"
+                  }.`
+                : "Everything is collected. Your businesses keep producing while you are away."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ActionForm
+              action={collectAllAction}
+              label={pendingTotal > 0 ? `Collect ${pendingTotal}` : "Collect"}
+              busyLabel="Collecting…"
+              variant="money"
+              size="md"
+              disabled={pendingTotal === 0}
+            />
+            <ButtonLink href="/business" variant="ghost" size="md">
+              Work a business
+            </ButtonLink>
+          </div>
+        </Panel>
+      ) : (
+        <Panel className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <h2 className="font-[family-name:var(--font-display)] text-sm font-bold tracking-wide text-slate-200 uppercase">
+              Start earning
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              You own land but nothing is built on it yet. A farm is the cheapest way in.
+            </p>
+          </div>
+          <ButtonLink href="/build" variant="money" size="md">
+            Build your first business
+          </ButtonLink>
+        </Panel>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel>

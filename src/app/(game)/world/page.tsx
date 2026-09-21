@@ -8,6 +8,7 @@ import {
   getPlotOwners,
   getWorldPlots,
 } from "@/services/player/state";
+import { getWorldBuildings } from "@/services/economy/read";
 
 export const metadata: Metadata = { title: "World" };
 
@@ -18,11 +19,12 @@ export const metadata: Metadata = { title: "World" };
  * canvas as plain data. The client renders it; it never invents it.
  */
 export default async function WorldPage() {
-  const [player, plots, settings, owners] = await Promise.all([
+  const [player, plots, settings, owners, worldBuildings] = await Promise.all([
     getCurrentPlayer(),
     getWorldPlots(),
     getGameSettings(),
     getPlotOwners(),
+    getWorldBuildings(),
   ]);
 
   if (!player) redirect("/login");
@@ -31,12 +33,17 @@ export default async function WorldPage() {
     [...owners.values()].map((owner) => [owner.ownerId, owner.companyName]),
   );
 
+  const businesses = new Map(
+    worldBuildings.map((b) => [b.plotId, { type: b.businessType, level: b.level }]),
+  );
+
   const data = buildWorldData(plots, {
     gridMin: settings.worldGridMin,
     gridMax: settings.worldGridMax,
     cellSize: settings.worldCellSize,
     myId: player.profile.id,
     ownerLabels,
+    businesses,
   });
 
   return (

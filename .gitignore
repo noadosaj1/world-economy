@@ -4,13 +4,16 @@ node_modules/
 .pnp.js
 
 # next
-.next/
-out/
-build/
+/.next/
+/out/
+# Anchored to the repo root on purpose: an unanchored `build/` also matches
+# app routes like src/app/(game)/build/, which silently kept a whole page
+# out of the repository.
+/build/
 next-env.d.ts
 
 # production
-dist/
+/dist/
 
 # misc
 .DS_Store

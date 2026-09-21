@@ -18,6 +18,37 @@ export const ECONOMY = {
   starterPlotCount: 1,
   /** Offline production is credited for at most this many hours. */
   offlineCapHours: 24,
+  /** Hard ceiling on the offline cap, however many warehouses you own. */
+  offlineCapCeilingHours: 72,
+  /** Seconds before a business can be worked by hand again. */
+  workCooldownSeconds: 60,
+  /** Highest level a business can reach. */
+  maxBuildingLevel: 5,
+} as const;
+
+/**
+ * Progression curves. These mirror production_multiplier(), upgrade_cost(),
+ * worker_cost() and max_workers() in the migrations, so the UI can show a
+ * player what something will cost before they commit to it.
+ *
+ * The database is what actually charges them. If these ever disagree, the
+ * database wins and the UI is the thing that is wrong.
+ */
+export const PROGRESSION = {
+  /** Output multiplier from level: 1x at level 1, 3x at level 5. */
+  levelMultiplier: (level: number) => 1 + 0.5 * (Math.max(level, 1) - 1),
+  /** Each worker adds 12%. */
+  workerMultiplier: (workers: number) => 1 + 0.12 * Math.max(workers, 0),
+  /** Combined output multiplier. */
+  outputMultiplier: (level: number, workers: number) =>
+    PROGRESSION.levelMultiplier(level) * PROGRESSION.workerMultiplier(workers),
+  /** Worker slots at a given level. */
+  maxWorkers: (level: number) => Math.max(level, 1) * 2,
+  /** Cost to reach the next level. */
+  upgradeCost: (buildCost: number, level: number) =>
+    Math.round(buildCost * 0.75 * Math.max(level, 1) * 100) / 100,
+  /** Cost of one more worker. */
+  workerCost: (buildCost: number) => Math.round(buildCost * 0.05 * 100) / 100,
 } as const;
 
 /** The world grid. Mirrors world_* keys in game_config. */
