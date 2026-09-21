@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, Field, FormError, FormNotice, TextInput } from "@/components/ui";
-import { emptyAuthState, signIn, signUp } from "./actions";
+import { signIn, signUp } from "./actions";
+import { emptyAuthState } from "./form-state";
 
 /**
  * Email + password form for signing in and signing up.

@@ -5,7 +5,8 @@ import { useFormStatus } from "react-dom";
 import { Button, Field, FormError, Select, TextInput } from "@/components/ui";
 import { INDUSTRIES, INDUSTRY_KEYS } from "@/config/economy";
 import { companyNameSchema, tickerSchema, usernameSchema } from "@/lib/validation/onboarding";
-import { createCompany, emptyOnboardingState } from "./actions";
+import { createCompany } from "./actions";
+import { emptyOnboardingState } from "./form-state";
 
 /** Suggests a ticker from the company name: "Noa Industries" -> "NOAIN". */
 function suggestTicker(name: string): string {

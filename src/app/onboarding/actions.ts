@@ -5,11 +5,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { onboardingSchema } from "@/lib/validation/onboarding";
 import { toGameFailure } from "@/lib/errors";
-import type { OnboardingResult } from "@/types/db";
-
-export type OnboardingState = { error: string | null };
-
-export const emptyOnboardingState: OnboardingState = { error: null };
+// Imported, not declared here: a "use server" module may only export async
+// functions, so the state object lives in its own file.
+import type { OnboardingState } from "./form-state";
 
 /**
  * Creates the player's company.
@@ -55,5 +53,3 @@ export async function createCompany(
   revalidatePath("/", "layout");
   redirect("/dashboard?welcome=1");
 }
-
-export type { OnboardingResult };
