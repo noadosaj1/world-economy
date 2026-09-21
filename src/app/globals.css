@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   World Economy visual identity.
+
+   Dark, saturated, game-like - closer to a modern multiplayer tycoon than a
+   corporate dashboard. Money is always lime, danger is always rose, and the
+   nine world zones keep the same colour everywhere they appear (HUD, map, 3D).
+--------------------------------------------------------------------------- */
+
+@theme {
+  --color-ink-950: #070a16;
+  --color-ink-900: #0c1023;
+  --color-ink-800: #141a35;
+  --color-ink-700: #1e2648;
+  --color-ink-600: #2c3660;
+  --color-ink-500: #445184;
+
+  --color-cash-400: #a3e635;
+  --color-cash-500: #84cc16;
+  --color-cash-600: #65a30d;
+
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+
+  --color-warn-500: #f59e0b;
+  --color-danger-500: #f43f5e;
+
+  --color-zone-downtown: #6366f1;
+  --color-zone-commercial: #0ea5e9;
+  --color-zone-industrial: #f59e0b;
+  --color-zone-residential: #22c55e;
+  --color-zone-rural: #84cc16;
+  --color-zone-mining: #a1a1aa;
+  --color-zone-waterfront: #06b6d4;
+  --color-zone-entertainment: #ec4899;
+  --color-zone-gambling: #a855f7;
+
+  --font-display: var(--font-display), system-ui, sans-serif;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+  --surface: var(--color-ink-900);
+  --surface-raised: var(--color-ink-800);
+  --border-subtle: color-mix(in oklab, var(--color-ink-500) 45%, transparent);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #1b2352 0%, transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, #2a1b4d 0%, transparent 55%),
+    var(--color-ink-950);
+  color: #e6e9f5;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures stop money from jittering as it ticks up. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* The 3D canvas takes pointer input; never let the page scroll under it. */
+.canvas-host {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
