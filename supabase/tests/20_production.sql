@@ -102,11 +102,11 @@ select test.expect_error(
 \echo '== active work pays out =='
 
 select test.assert(
-  (public.work_business((select id from t_farm)) ->> 'quantity')::numeric = 10,
-  'working a level 1 farm yields 10 wheat');
+  (public.work_business((select id from t_farm)) ->> 'quantity')::numeric = 50,
+  'working a level 1 farm yields 50 wheat');
 select test.assert(
   (select quantity from public.player_inventory
-   where owner_id = :u1 and resource_key = 'wheat') = 10,
+   where owner_id = :u1 and resource_key = 'wheat') = 50,
   'the wheat is in the inventory');
 select test.assert(
   (select count(*) from public.inventory_transactions
@@ -119,7 +119,7 @@ select test.expect_error(
   $$select public.work_business((select id from t_farm))$$, 'ON_COOLDOWN');
 select test.assert(
   (select quantity from public.player_inventory
-   where owner_id = :u1 and resource_key = 'wheat') = 10,
+   where owner_id = :u1 and resource_key = 'wheat') = 50,
   'a second immediate click produced nothing');
 
 -- Ten more attempts in a row must all be refused.
@@ -164,11 +164,11 @@ select test.login(:u1);
 
 -- 14/hr at level 1, three hours -> 42 wheat, on top of the 10 from working.
 select test.assert(
-  (public.collect_all() -> 'goods' ->> 'wheat')::numeric = 42,
-  'three offline hours produced 42 wheat');
+  (public.collect_all() -> 'goods' ->> 'wheat')::numeric = 480,
+  'three offline hours produced 480 wheat');
 select test.assert(
   (select quantity from public.player_inventory
-   where owner_id = :u1 and resource_key = 'wheat') = 52,
+   where owner_id = :u1 and resource_key = 'wheat') = 530,
   'offline output was added to the inventory');
 
 \echo '== EXPLOIT: collecting the same window twice =='
@@ -178,7 +178,7 @@ select test.assert(
   'collecting again immediately produces nothing');
 select test.assert(
   (select quantity from public.player_inventory
-   where owner_id = :u1 and resource_key = 'wheat') = 52,
+   where owner_id = :u1 and resource_key = 'wheat') = 530,
   'the inventory did not grow on the second collect');
 
 \echo '== offline production is capped =='
@@ -192,7 +192,7 @@ where id = (select id from t_farm);
 set role authenticated;
 select test.login(:u1);
 select test.assert(
-  (public.collect_all() -> 'goods' ->> 'wheat')::numeric = 14 * 24,
+  (public.collect_all() -> 'goods' ->> 'wheat')::numeric = 160 * 24,
   'a year offline credits only the 24 hour cap');
 
 \echo '== the market =='
@@ -216,9 +216,18 @@ select test.expect_error(
 select test.assert(
   (public.buy_resource('ore', 10) ->> 'cost')::numeric > 0,
   'a player can buy resources');
+
+-- Prices are deliberately steady. One player making a small trade should
+-- barely register, so nobody can swing the market for everyone else.
+select test.assert(
+  (select price from public.resource_types where key = 'ore') = 7,
+  'a ten unit trade leaves the price effectively unchanged');
+
+-- Real volume does move it, though.
+select public.buy_resource('ore', 2000);
 select test.assert(
   (select price from public.resource_types where key = 'ore') > 7,
-  'buying pushed the ore price up');
+  'a large trade does move the price up');
 
 \echo '== EXPLOIT: buying more than you can afford =='
 
@@ -252,12 +261,12 @@ select test.assert(
 -- With ore on hand it works, and consumes 2 ore per steel.
 select public.buy_resource('ore', 100);
 select test.assert(
-  (public.work_business((select id from t_foundry)) ->> 'quantity')::numeric = 4,
-  'working a foundry with ore yields 4 steel');
+  (public.work_business((select id from t_foundry)) ->> 'quantity')::numeric = 10,
+  'working a foundry with ore yields 10 steel');
 select test.assert(
   (select quantity from public.player_inventory
-   where owner_id = :u2 and resource_key = 'ore') = 92,
-  '8 ore was consumed for 4 steel');
+   where owner_id = :u2 and resource_key = 'ore') = 80,
+  '20 ore was consumed for 10 steel');
 
 \echo '== upgrades and workers =='
 

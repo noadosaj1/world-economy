@@ -30,14 +30,18 @@ What works today:
 - **Six businesses** — Farm, Mine, Food Mill, Steel Foundry, Store, Warehouse,
   each buildable only in the districts that suit it
 - **Active work** — work a business by hand for an instant batch of goods plus a
-  cash tip, on a server-enforced cooldown
+  cash tip, on a server-enforced 15 second cooldown. Ten minutes of steady
+  clicking earns about $10,000, which the balance simulation checks on every
+  test run
 - **Offline production** — businesses keep producing while you are logged out,
   calculated from timestamps and capped (24h, extended by warehouses)
 - **Two production chains** — `wheat → food` and `ore → steel`, so a farmer and a
   mill owner genuinely need each other
 - **Inventory** — exact quantities, written only by the database
 - **A resource market** — one server-set price per good that drifts with what
-  players actually trade: selling pushes a price down, buying pushes it up
+  players actually trade: selling pushes a price down, buying pushes it up. A
+  small trade barely registers, so no single player can swing it. One button
+  sells everything you hold
 - **Upgrades and workers** — five levels, worker slots that scale with level
 - **Businesses on the map** — a farm looks like a farm, and a level 5 anything
   towers over a level 1

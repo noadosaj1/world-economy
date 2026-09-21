@@ -4,6 +4,8 @@ import { Badge, ButtonLink, EmptyState, Panel, PanelHeader, Stat } from "@/compo
 import { formatMoney, formatMoneyPrecise } from "@/lib/economy/format";
 import { getCurrentPlayer } from "@/services/player/state";
 import { getInventory, getResources } from "@/services/economy/read";
+import { ActionForm } from "@/components/ActionForm";
+import { sellAllAction } from "@/services/economy/actions";
 
 export const metadata: Metadata = { title: "Inventory" };
 
@@ -52,9 +54,18 @@ export default async function InventoryPage() {
           title="Goods"
           hint="Quantities are exact - the database is the only thing that writes them."
           action={
-            <ButtonLink href="/market" variant="ghost" size="sm">
-              Trade
-            </ButtonLink>
+            <div className="flex shrink-0 items-center gap-2">
+              <ButtonLink href="/market" variant="ghost" size="sm">
+                Trade
+              </ButtonLink>
+              <ActionForm
+                action={sellAllAction}
+                label="Sell everything"
+                busyLabel="Selling…"
+                variant="money"
+                disabled={!anything}
+              />
+            </div>
           }
         />
 

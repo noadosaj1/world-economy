@@ -21,7 +21,7 @@ export const ECONOMY = {
   /** Hard ceiling on the offline cap, however many warehouses you own. */
   offlineCapCeilingHours: 72,
   /** Seconds before a business can be worked by hand again. */
-  workCooldownSeconds: 60,
+  workCooldownSeconds: 15,
   /** Highest level a business can reach. */
   maxBuildingLevel: 5,
 } as const;

@@ -183,6 +183,23 @@ export async function sellResourceAction(
   return { error: null, success: `Sold ${quantity} for ${formatMoney(gross)}.` };
 }
 
+export async function sellAllAction(
+  _prev: ActionResult,
+  _formData?: FormData,
+): Promise<ActionResult> {
+  const { data, error } = await callRpc("sell_all_resources", {});
+  if (error) return { error, success: null };
+
+  const result = data as { gross?: number; units?: number } | null;
+  const gross = Number(result?.gross) || 0;
+  const units = Number(result?.units) || 0;
+
+  revalidateGame();
+
+  if (units === 0) return { error: null, success: "Nothing to sell yet." };
+  return { error: null, success: `Sold ${units} goods for ${formatMoney(gross)}.` };
+}
+
 export async function buyResourceAction(
   _prev: ActionResult,
   formData: FormData,

@@ -5,7 +5,11 @@ import { ActionForm } from "@/components/ActionForm";
 import { formatMoney, formatMoneyPrecise, toAmount } from "@/lib/economy/format";
 import { getCurrentPlayer } from "@/services/player/state";
 import { getInventory, getResources } from "@/services/economy/read";
-import { buyResourceAction, sellResourceAction } from "@/services/economy/actions";
+import {
+  buyResourceAction,
+  sellAllAction,
+  sellResourceAction,
+} from "@/services/economy/actions";
 
 export const metadata: Metadata = { title: "Market" };
 
@@ -19,16 +23,36 @@ export default async function MarketPage() {
   if (!player) redirect("/login");
   const cash = toAmount(player.profile.cash);
 
+  const totalHeld = [...inventory.values()].reduce((sum, qty) => sum + qty, 0);
+  const totalValue = resources.reduce(
+    (sum, r) => sum + (inventory.get(r.key) ?? 0) * r.price,
+    0,
+  );
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-white">
-          Market
-        </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          One price per good, set by the server. Selling pushes a price down, buying pushes
-          it up - so what everyone trades moves the market.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-white">
+            Market
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-slate-400">
+            One price per good, set by the server. Selling pushes a price down, buying
+            pushes it up - so what everyone trades moves the market.
+          </p>
+        </div>
+        <ActionForm
+          action={sellAllAction}
+          label={
+            totalHeld > 0
+              ? `Sell everything · about ${formatMoney(totalValue)}`
+              : "Sell everything"
+          }
+          busyLabel="Selling…"
+          variant="money"
+          size="md"
+          disabled={totalHeld < 1}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
