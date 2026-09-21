@@ -36,10 +36,6 @@ export function cellToWorld(index: number, cellSize: number): number {
   return index * cellSize;
 }
 
-export function worldToCell(position: number, cellSize: number): number {
-  return Math.round(position / cellSize);
-}
-
 export function cellKey(x: number, z: number): string {
   return `${x}:${z}`;
 }
@@ -96,13 +92,33 @@ export function worldExtent(data: Pick<WorldData, "gridMax" | "cellSize">): numb
   return (data.gridMax + 0.5) * data.cellSize;
 }
 
-/** The plot the given world position stands on, if any. */
-export function plotAt(
-  data: WorldData,
-  x: number,
-  z: number,
-): WorldPlot | null {
-  const gx = worldToCell(x, data.cellSize);
-  const gz = worldToCell(z, data.cellSize);
-  return data.plots.find((p) => p.gridX === gx && p.gridZ === gz) ?? null;
+
+/** Lightens (positive amount) or darkens (negative) a hex colour. */
+export function shade(hex: string, amount: number): string {
+  const clean = hex.replace("#", "");
+  const num = Number.parseInt(clean, 16);
+  const channels = [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+  const target = amount < 0 ? 0 : 255;
+  const t = Math.min(Math.abs(amount), 1);
+
+  return `#${channels
+    .map((c) => Math.round(c + (target - c) * t))
+    .map((c) => c.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+/** Blends two hex colours. t=0 returns `from`, t=1 returns `to`. */
+export function mix(from: string, to: string, t: number): string {
+  const parse = (hex: string) => {
+    const n = Number.parseInt(hex.replace("#", ""), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const a = parse(from);
+  const b = parse(to);
+  const amount = Math.min(Math.max(t, 0), 1);
+
+  return `#${a
+    .map((channel, i) => Math.round(channel + (b[i]! - channel) * amount))
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`;
 }

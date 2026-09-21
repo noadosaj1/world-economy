@@ -182,7 +182,7 @@ export default async function DashboardPage({
           <li>▸ Resources, production chains and the player market</li>
           <li>▸ Shops, workers, vehicles and property rental</li>
           <li>▸ The stock market, so others can buy into your company</li>
-          <li>▸ Seeing other players walking around the world</li>
+          <li>▸ Seeing other players&apos; companies appear across the map</li>
           <li>▸ Billboards, then the gambling district</li>
         </ul>
       </Panel>

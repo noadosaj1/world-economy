@@ -1,14 +1,18 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef } from "react";
+import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
  * One draw call for many boxes.
  *
- * The world has hundreds of plot pads, road tiles and scenery blocks. Each set
- * goes through here as a single InstancedMesh instead of hundreds of React
- * components, which is what keeps the scene cheap in a browser.
+ * The city is made of hundreds of plot pads, road tiles, buildings and trees.
+ * Each set goes through here as a single InstancedMesh instead of hundreds of
+ * React components, which is what keeps the map cheap in a browser.
+ *
+ * Optionally interactive: `onSelect` and `onHover` report the instance index,
+ * which callers map back to whichever plot that instance was built from.
  */
 
 export type TileInstance = {
@@ -23,15 +27,20 @@ export function InstancedTiles({
   metalness = 0.05,
   castShadow = false,
   receiveShadow = true,
+  onSelect,
+  onHover,
 }: {
   instances: TileInstance[];
   roughness?: number;
   metalness?: number;
   castShadow?: boolean;
   receiveShadow?: boolean;
+  onSelect?: (index: number) => void;
+  onHover?: (index: number | null) => void;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const count = instances.length;
+  const interactive = Boolean(onSelect || onHover);
 
   // Reused scratch objects: allocating per instance per commit would churn the
   // garbage collector for no reason.
@@ -70,6 +79,25 @@ export function InstancedTiles({
       castShadow={castShadow}
       receiveShadow={receiveShadow}
       frustumCulled={false}
+      onClick={
+        onSelect &&
+        ((event: ThreeEvent<MouseEvent>) => {
+          // Only the nearest instance under the cursor, not everything the ray
+          // passes through.
+          event.stopPropagation();
+          if (event.instanceId !== undefined) onSelect(event.instanceId);
+        })
+      }
+      onPointerMove={
+        onHover &&
+        ((event: ThreeEvent<PointerEvent>) => {
+          event.stopPropagation();
+          if (event.instanceId !== undefined) onHover(event.instanceId);
+        })
+      }
+      onPointerOut={onHover && (() => onHover(null))}
+      // Without this, the raycaster tests every instance on every pointer move.
+      raycast={interactive ? undefined : () => null}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial roughness={roughness} metalness={metalness} />

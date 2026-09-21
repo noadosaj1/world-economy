@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildWorldData,
-  cellNoise,
-  cellToWorld,
-  plotAt,
-  worldToCell,
-} from "@/game/world/grid";
+import { buildWorldData, cellNoise, cellToWorld, mix, shade } from "@/game/world/grid";
 import type { Plot } from "@/types/db";
 
 function plot(overrides: Partial<Plot> & Pick<Plot, "grid_x" | "grid_z">): Plot {
@@ -33,15 +27,10 @@ const OPTIONS = {
 };
 
 describe("grid maths", () => {
-  it("maps cells to world units and back", () => {
+  it("maps cells to world units", () => {
     expect(cellToWorld(3, 20)).toBe(60);
-    expect(worldToCell(60, 20)).toBe(3);
-    expect(worldToCell(-41, 20)).toBe(-2);
-  });
-
-  it("snaps positions inside a cell to that cell", () => {
-    expect(worldToCell(58, 20)).toBe(3);
-    expect(worldToCell(69, 20)).toBe(3);
+    expect(cellToWorld(-2, 20)).toBe(-40);
+    expect(cellToWorld(0, 20)).toBe(0);
   });
 
   it("produces stable noise for a cell", () => {
@@ -103,14 +92,57 @@ describe("world data", () => {
     expect(data.plots[0]!.price).toBe(120000);
   });
 
-  it("finds the plot under a world position", () => {
-    const data = buildWorldData(
-      [plot({ grid_x: 2, grid_z: -1, owner_id: "me" })],
-      { ...OPTIONS, gridMin: -3, gridMax: 3 },
-    );
+  it("keeps plot order stable, so an instance index maps back to a plot", () => {
+    // The map identifies a clicked plot by its InstancedMesh index, so the
+    // order of `plots` must match the order the rows came in.
+    const rows = [
+      plot({ grid_x: -1, grid_z: -1 }),
+      plot({ grid_x: 0, grid_z: 0, owner_id: "me" }),
+      plot({ grid_x: 1, grid_z: 1 }),
+    ];
+    const data = buildWorldData(rows, OPTIONS);
 
-    expect(plotAt(data, 40, -20)?.gridX).toBe(2);
-    // Standing on the road between plots is not standing on a plot.
-    expect(plotAt(data, 0, 0)).toBeNull();
+    expect(data.plots.map((p) => p.id)).toEqual(rows.map((r) => r.id));
+  });
+});
+
+describe("colour shading", () => {
+  it("darkens towards black and lightens towards white", () => {
+    expect(shade("#808080", -1)).toBe("#000000");
+    expect(shade("#808080", 1)).toBe("#ffffff");
+    expect(shade("#808080", 0)).toBe("#808080");
+  });
+
+  it("clamps amounts beyond the range instead of producing bad hex", () => {
+    expect(shade("#6366f1", -5)).toBe("#000000");
+    expect(shade("#6366f1", 5)).toBe("#ffffff");
+  });
+
+  it("always returns a well-formed six-digit hex colour", () => {
+    for (const amount of [-0.9, -0.55, -0.12, 0.35, 0.8]) {
+      expect(shade("#0ea5e9", amount)).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+});
+
+describe("colour mixing", () => {
+  it("returns each end of the range exactly", () => {
+    expect(mix("#000000", "#ffffff", 0)).toBe("#000000");
+    expect(mix("#000000", "#ffffff", 1)).toBe("#ffffff");
+  });
+
+  it("blends towards the second colour", () => {
+    expect(mix("#000000", "#ffffff", 0.5)).toBe("#808080");
+  });
+
+  it("clamps out-of-range amounts", () => {
+    expect(mix("#000000", "#ffffff", -3)).toBe("#000000");
+    expect(mix("#000000", "#ffffff", 4)).toBe("#ffffff");
+  });
+
+  it("always returns a well-formed six-digit hex colour", () => {
+    for (const t of [0.2, 0.45, 0.78]) {
+      expect(mix("#84b562", "#a855f7", t)).toMatch(/^#[0-9a-f]{6}$/);
+    }
   });
 });

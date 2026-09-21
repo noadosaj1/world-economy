@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const LOOP = [
   { step: "Start", body: `Sign up and take ${formatMoney(ECONOMY.startingCash)} plus a free plot of land.` },
   { step: "Build", body: "Put a business on your land - a farm, a mine, a shop, a factory." },
-  { step: "Work", body: "Walk into your own business and grind. Active work pays better than idling." },
+  { step: "Work", body: "Work your business by hand. Active work pays better than idling." },
   { step: "Earn", body: "Your business keeps producing while you are logged out." },
   { step: "Expand", body: "Buy more land, hire workers, run vehicles, advertise across the city." },
   { step: "Risk", body: "Trade other players' stock, or take your chances in the gambling district." },

@@ -19,8 +19,9 @@ end to end today:
 - One **free starter plot**, claimed atomically from the world grid
 - A dashboard showing cash, net worth, land and the full money ledger
 - Company and Land pages backed by real rows
-- A **3D world** you can walk around in third person, with roads, nine zones,
-  city scenery and a sign over every claimed plot
+- An **isometric 3D city map** you pan, zoom, rotate and click: an island of
+  400 plots across nine districts, with roads, varied buildings, and a price
+  tag on every plot for sale and the owner's name on every claimed one
 - Everything persists: refreshing or logging out changes nothing
 
 Not built yet, and deliberately marked "soon" in the navigation rather than
@@ -85,8 +86,7 @@ src/
   components/        UI primitives and the HUD shell
   config/            economy.ts - all balance numbers in one place
   game/
-    world/           grid maths, scene, instanced geometry, HUD
-    player/          third-person controller and input
+    world/           grid maths, terrain, city blocks, map camera, labels, HUD
   lib/
     supabase/        browser / server / admin clients
     economy/         money parsing and formatting
@@ -117,8 +117,13 @@ where anything is.
 **The 3D bundle is lazy.** Three.js, R3F and drei load only on `/world`.
 
 **Scenery is never a fake business.** Background city blocks are drawn only on
-*unclaimed* land. A building on owned land, and the sign above it, always
-reflects a real company row.
+*unclaimed* land, and a claimed plot is marked by its label and pad colour
+rather than by a building - because Phase 1 has no businesses yet, and drawing
+one would show a company that does not exist.
+
+**The map is a map, not a walkable world.** You look down on the city and
+click plots. There is no avatar and no first- or third-person camera; an
+earlier draft had one, and it was the wrong game.
 
 ## Development
 
@@ -147,7 +152,7 @@ Each phase leaves the game playable.
 | 4 | Resources, production chains, factories, mines, the resource market | |
 | 5 | More land, shops, workers, vehicles, logistics, property rental | |
 | 6 | The stock market: shares, holdings, price history, valuation | |
-| 7 | Multiplayer presence: other players visible and walking around | |
+| 7 | Multiplayer presence: other players' companies live on the map | |
 | 8 | Advertising: ad slots, billboards, image uploads, campaign stats | |
 | 9 | Gambling district: roulette, slots, dice, blackjack, fictional sports, prediction markets | |
 | 10 | Polish: models, sound, effects, onboarding, performance, mobile menus | |
