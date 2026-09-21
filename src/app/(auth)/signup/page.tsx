@@ -9,8 +9,14 @@ import { CredentialsForm } from "../credentials-form";
 
 export const metadata: Metadata = { title: "Create account" };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   if (!isSupabaseConfigured()) return <SetupNotice />;
+
+  const { next } = await searchParams;
 
   return (
     <Panel className="p-6">
@@ -21,7 +27,7 @@ export default function SignupPage() {
         You&apos;ll get {formatMoney(ECONOMY.startingCash)} and a free plot of land.
       </p>
 
-      <CredentialsForm mode="signup" />
+      <CredentialsForm mode="signup" next={next} />
 
       <p className="mt-5 text-sm text-slate-400">
         Already playing?{" "}

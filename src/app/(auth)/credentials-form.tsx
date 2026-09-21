@@ -2,9 +2,21 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useSearchParams } from "next/navigation";
 import { Button, Field, FormError, FormNotice, TextInput } from "@/components/ui";
 import { emptyAuthState, signIn, signUp } from "./actions";
+
+/**
+ * Email + password form for signing in and signing up.
+ *
+ * `next` arrives as a prop from the page rather than being read here with
+ * useSearchParams(). A client hook that reads the query string cannot run
+ * while a page is being statically prerendered unless it sits inside a
+ * Suspense boundary - which is what broke a deploy once - and the server
+ * already has the value, so it just passes it down.
+ *
+ * The value is only a hint for redirect-after-login. The server action
+ * validates it before trusting it, so it cannot become an open redirect.
+ */
 
 function Submit({ label, busyLabel }: { label: string; busyLabel: string }) {
   const { pending } = useFormStatus();
@@ -15,10 +27,15 @@ function Submit({ label, busyLabel }: { label: string; busyLabel: string }) {
   );
 }
 
-export function CredentialsForm({ mode }: { mode: "signin" | "signup" }) {
+export function CredentialsForm({
+  mode,
+  next,
+}: {
+  mode: "signin" | "signup";
+  next?: string;
+}) {
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction] = useActionState(action, emptyAuthState);
-  const next = useSearchParams().get("next");
 
   return (
     <form action={formAction} className="mt-6 space-y-4">

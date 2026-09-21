@@ -12,8 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "./scripts/db-test.sh",
-    "check": "npm run typecheck && npm run typecheck:tests && npm run lint && npm run test",
-    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json"
+    "check": "npm run typecheck && npm run typecheck:tests && npm run lint && npm run test && npm run verify:build",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "verify:build": "./scripts/verify-build.sh"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
